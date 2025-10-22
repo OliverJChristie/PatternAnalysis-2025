@@ -22,7 +22,7 @@ class SimpleColorCNN(nn.Module):
         self.layers = nn.Sequential(
             # Input: [B, 1, 96, 96]
             nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
-            nn.ReLu(inplace=True),
+            nn.ReLU(inplace=True),
 
             # [B, 32, 96, 96]
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
@@ -30,7 +30,7 @@ class SimpleColorCNN(nn.Module):
 
             # [B, 64, 96, 96]
             nn.Conv2d(64, 32, kernel_size=3, padding=1),
-            nn.ReLu(inplace=True),
+            nn.ReLU(inplace=True),
 
             # [B, 32, 96, 96]
             # Output layer: maps back to 3 channels
