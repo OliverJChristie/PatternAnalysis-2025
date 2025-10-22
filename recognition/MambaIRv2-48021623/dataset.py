@@ -12,23 +12,23 @@ import torchvision.transforms as transforms
 from PIL import Image
 
 class ColorizationDataset(Dataset):
-    def __init__(self, subset, split='train', crop_size=96):
+    def __init__(self, subset, split='train', crop_size=224):
         super().__init__()
         self.split = split
         self.subset = subset
         self.crop_size = crop_size
         
         # Define transforms
-        # Training: Resize so shortest edge is 128, then take a 96x96 random crop
+        # Training: Resize so shortest edge is 256, then take a 224x224 random crop
         self.train_transform = transforms.Compose([
-            transforms.Resize(128, antialias=True), # Resize to 128 first
+            transforms.Resize(256, antialias=True), # Resize to 128 first
             transforms.RandomCrop(crop_size),      # Take 96x96 random crop
             transforms.RandomHorizontalFlip(p=0.5),
         ])
         
-        # Validation: Resize so shortest edge is 128, then take a 96x96 center crop
+        # Validation: Resize so shortest edge is 256, then take a 224x224 center crop
         self.val_transform = transforms.Compose([
-            transforms.Resize(128, antialias=True),
+            transforms.Resize(256, antialias=True),
             transforms.CenterCrop(crop_size),
         ])
         
@@ -52,8 +52,6 @@ class ColorizationDataset(Dataset):
         try:
             pil_img, _ = self.subset[idx]
         except Exception as e:
-            # Handle potential corrupt images in the dataset
-            print(f"Warning: Skipping corrupt image at index {idx}: {e}")
             # Try to load the next image instead
             return self.__getitem__((idx + 1) % len(self))
         
