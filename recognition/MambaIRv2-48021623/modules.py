@@ -66,12 +66,8 @@ class VimColorizer(nn.Module):
         # The econded expects 3-channel input. We'll handle this in the forward pass.
         # Get the number of features from the encoder's output.
         # For vim-tiny, this is 192
-        encoder_out_dim = self.encoder.head.in_features()
+        encoder_out_dim = self.encoder.head.in_features
 
-        # Freeze the entire encoder. We are only fine-tuning the decoder.
-        for param in self.encoder.parameters():
-            param.requires_grad = False
-        
         # Decoder
         # This decoder takes the 14x14 feature map from the encoder and upsamples
         # it back to 224x224
