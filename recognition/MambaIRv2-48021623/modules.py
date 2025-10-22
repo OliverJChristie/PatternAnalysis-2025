@@ -26,7 +26,7 @@ class SimpleColorCNN(nn.Module):
 
             # [B, 32, 96, 96]
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
 
             # [B, 64, 96, 96]
             nn.Conv2d(64, 32, kernel_size=3, padding=1),
