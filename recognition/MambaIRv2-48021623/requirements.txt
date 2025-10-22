@@ -1,7 +1,5 @@
 torch>=2.0.0
 torchvision
-tqdm
 numpy
-scikit-image
 matplotlib
-scipy
+tqdm
