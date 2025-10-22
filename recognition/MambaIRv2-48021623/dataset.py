@@ -1,84 +1,76 @@
 """
 dataset.py
 
-This file defines the PyTorch Dataset for the colorization task.
-It uses the STL-10 dataset, which it can download automatically.
-- It splits the data into 'train' and 'test' sets.
-- It applies augmentations (flipping, jitter) to the 'train' set only.
-- It returns a (grayscale_image, color_image) pair for training.
-- Both tensors are normalized to the range [-1, 1].
+A wrapper dataset that applies colorization transforms.
+It takes a subset of an existing dataset (like Caltech-256)
+and returns (grayscale_input, color_target) pairs.
 """
 
 import torch
 from torch.utils.data import Dataset
-from torchvision.datasets import STL10
 import torchvision.transforms as transforms
+from PIL import Image
 
 class ColorizationDataset(Dataset):
-    """
-    PyTorch Dataset for image colorization.
-
-    Loads the STL-10 dataset, applies augmentations to the training split,
-    and returns a (grayscale_input, color_target pair).
-    """
-    def __init__(self, root, split='train', download=True, img_size=96, transform=None):
-        """
-        Args:
-            root (str): Directory where the dataset will be stored.
-            split (str): 'train" or 'test' to load the respective split.
-            download (bool): If True, downloads the dataset if not found.
-            img_size (int): The target size (H and W) to resize all images to.
-                            STL-10 images are 96x96 by default.
-            transform (callable, optional): Optional override for the base transform.
-        """
+    def __init__(self, subset, split='train', crop_size=96):
         super().__init__()
         self.split = split
-
-        # Download/Load the STL-10 dataset
-        self.stl_data = STL10(root=root, split=split, download=download)
-
-        if transform is None:
-            if split == 'train':
-                self.base_transform = transforms.Compose([
-                    transforms.Resize((img_size, img_size), antialias=True),
-                    transforms.RandomHorizontalFlip(p=0.5),
-                    transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.05)
-                ])
-            else:
-                self.base_transform = transforms.Compose([
-                    transforms.Resize((img_size, img_size), antialias=True)
-                ])
-        else:
-            self.base_transform = transform
+        self.subset = subset
+        self.crop_size = crop_size
         
+        # Define transforms
+        # Training: Resize so shortest edge is 128, then take a 96x96 random crop
+        self.train_transform = transforms.Compose([
+            transforms.Resize(128, antialias=True), # Resize to 128 first
+            transforms.RandomCrop(crop_size),      # Take 96x96 random crop
+            transforms.RandomHorizontalFlip(p=0.5),
+        ])
+        
+        # Validation: Resize so shortest edge is 128, then take a 96x96 center crop
+        self.val_transform = transforms.Compose([
+            transforms.Resize(128, antialias=True),
+            transforms.CenterCrop(crop_size),
+        ])
+        
+        # Assign paths and transforms based on the split
+        if split == 'train':
+            self.transform = self.train_transform
+        else:
+            self.transform = self.val_transform
+            
+        # Tensor conversions and normalizations
         self.to_tensor = transforms.ToTensor()
-
-        self.normalize_rgb = transforms.Normalize(mean=[0.5,0.5,0.5], std=[0.5,0.5,0.5])
+        # Normalize to [-1, 1]
+        self.normalize_rgb = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         self.normalize_gray = transforms.Normalize(mean=[0.5], std=[0.5])
-
         self.to_grayscale = transforms.Grayscale(num_output_channels=1)
-    
+
     def __len__(self):
-        """ Returns the total number of images in the split. """
-        return len(self.stl_data)
-    
+        return len(self.subset)
+
     def __getitem__(self, idx):
-        """
-        Fetches the image at the given index, processes it, and returns the
-        (grayscale_input, color_target) pair.
-        """
-
-        pil_img, _ = self.stl_data[idx]
-
-        aug_pil_img = self.base_transform(pil_img)
-
+        try:
+            pil_img, _ = self.subset[idx]
+        except Exception as e:
+            # Handle potential corrupt images in the dataset
+            print(f"Warning: Skipping corrupt image at index {idx}: {e}")
+            # Try to load the next image instead
+            return self.__getitem__((idx + 1) % len(self))
+        
+        # Ensure it's RGB (Caltech-256 has some grayscale)
+        pil_img = pil_img.convert('RGB')
+        
+        # Apply train/val transforms (resize, crop, flip)
+        aug_pil_img = self.transform(pil_img)
+        
+        # Create color target tensor
         target_tensor = self.to_tensor(aug_pil_img)
-
+        
+        # Create grayscale input tensor
         input_tensor = self.to_grayscale(target_tensor)
-
+        
+        # Normalize both to [-1, 1]
         target_norm = self.normalize_rgb(target_tensor)
         input_norm = self.normalize_gray(input_tensor)
         
-        # input_norm shape: [1, H, W]
-        # target_norm shape: [3, H, W]
         return input_norm, target_norm
