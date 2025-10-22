@@ -109,7 +109,7 @@ def main():
 
     if is_main_process:
         print(f"Datasets loaded. Total Train: {len(train_dataset)}, Total Val: {len(test_dataset)}")
-        print(f"Batch size per GPU: {BATCH_SIZE}. Total batch size: {BATH_SIZE * dist.get_world_size()}")
+        print(f"Batch size per GPU: {BATCH_SIZE}. Total batch size: {BATCH_SIZE * dist.get_world_size()}")
     
     model = VimColorizer(in_channels=1, out_channels=3).to(local_rank)
 
@@ -187,7 +187,7 @@ def main():
         val_loss_tensor = torch.tensor(avg_val_loss_gpu).to(local_rank)
 
         dist.all_reduce(train_loss_tensor, op=dist.ReduceOp.AVG)
-        dist.all_reduce(val_loss_tensor, op=distReduceOp.AVG)
+        dist.all_reduce(val_loss_tensor, op=dist.ReduceOp.AVG)
 
         avg_train_loss = train_loss_tensor.item()
         avg_val_loss = val_loss_tensor.item()
