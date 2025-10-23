@@ -10,7 +10,7 @@ def get_tokenized_datasets(tokenizer, model_checkpoint):
     Loads and preprocesses the BioLay-Summ dataset.
     """
     # Load the dataset from Hugging Face
-    dataset = load_dataset("biolaysumm/biolaysumm2024", "subtask2.1_rag")
+    dataset = load_dataset("BioLaySumm/BioLaySumm2025-LaymanRRG-opensource-track")
 
     prefix = "translate Radiology to Layperson: "
 
