@@ -16,13 +16,13 @@ def get_tokenized_datasets(tokenizer, model_checkpoint):
 
     def preprocess_function(examples):
         """ Tokenizes the input and target texts. """
-        # 'summary' is the expert report, 'lay_summary' is the target
-        inputs = [prefix + doc for doc in examples["summary"]]
+        # 'radiology_report' is the expert report, 'layman_report' is the target
+        inputs = [prefix + doc for doc in examples["radiology_report"]]
         model_inputs = tokenizer(inputs, max_length=512, truncation=True)
 
         # Tokenize the target summaries
         with tokenizer.as_target_tokenizer():
-            labels = tokenizer(examples["lay_summaru"], max_length=128, truncation=True)
+            labels = tokenizer(examples["layman_report"], max_length=128, truncation=True)
 
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
