@@ -29,8 +29,14 @@ def get_tokenized_datasets(tokenizer, model_checkpoint):
     
     print("Mapping and tokenizing datasets...")
 
+    original_columns = dataset["train"].column_names
+
     # Apply the preprocessing function to all splits
-    tokenized_datasets = dataset.map(preprocess_function, batched=True)
+    tokenized_datasets = dataset.map(
+        preprocess_function,
+        batched=True,
+        remove_columns=original_columns
+    )
 
     # Create a data collator to handle padding
     data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model_checkpoint)
