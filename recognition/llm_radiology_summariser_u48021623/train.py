@@ -10,7 +10,7 @@ from tqdm.auto import tqdm
 from modules import get_model_and_tokenizer
 from dataset import get_tokenized_datasets
 
-MODEL_CHECKPOINT = "google/flan-t5-small"
+MODEL_CHECKPOINT = "google/flan-t5-base"
 LEARNING_RATE = 2e-5
 NUM_EPOCHS = 3
 TRAIN_BATCH_SIZE = 8
@@ -160,6 +160,9 @@ accelerator.print(final_result)
 
 # Only the main process should handle saving the model and results
 if accelerator.is_main_process:
+
+    peak_vram_gb = torch.cuda.max_memory_allocated() / (1024**3)
+    accelerator.print(f"\n--- Peak VRAM Usage: {peak_vram_gb:.2f} GB ---")
     accelerator.print(f"Saving model to {OUTPUT_DIR}...")
     # Ensure everyone is done before saving
     accelerator.wait_for_everyone()
