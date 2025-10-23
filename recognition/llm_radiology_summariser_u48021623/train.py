@@ -75,6 +75,8 @@ for epoch in range(NUM_EPOCHS):
 
         accelerator.backward(loss)
 
+        accelerator.clip_grad_norm_(model.parameters(), 1.0)
+
         optimizer.step()
         lr_scheduler.step()
         optimizer.zero_grad()
