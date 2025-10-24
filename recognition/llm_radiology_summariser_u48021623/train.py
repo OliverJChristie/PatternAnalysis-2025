@@ -52,8 +52,8 @@ lr_scheduler = get_scheduler(
     num_training_steps=num_training_steps,
 )
 
-model, optimizer, train_dataloader, eval_dataloader, test_dataloader = accelerator.prepare(
-    model, optimizer, train_dataloader, eval_dataloader, test_dataloader
+model, optimizer, train_dataloader, eval_dataloader, test_dataloader, lr_scheduler = accelerator.prepare(
+    model, optimizer, train_dataloader, eval_dataloader, test_dataloader, lr_scheduler
 )
 
 accelerator.print("--- Starting Manual Training Loop ---")
@@ -102,7 +102,8 @@ for epoch in range(NUM_EPOCHS):
             generated_tokens = accelerator.unwrap_model(model).generate(
                 batch["input_ids"],
                 attention_mask=batch["attention_mask"],
-                max_length=128
+                max_length=128,
+                pad_token_id=tokenizer.pad_token_id
             )
         
         all_predictions.append(accelerator.gather_for_metrics(generated_tokens))
