@@ -88,6 +88,7 @@ for epoch in range(NUM_EPOCHS):
 
     accelerator.print(f"--- Starting Evaluation for Epoch {epoch+1} ---")
     model.eval()
+
     all_predictions = []
     all_labels = []
 
@@ -102,22 +103,22 @@ for epoch in range(NUM_EPOCHS):
             generated_tokens = accelerator.unwrap_model(model).generate(
                 batch["input_ids"],
                 attention_mask=batch["attention_mask"],
-                max_length=128,
-                pad_token_id=tokenizer.pad_token_id
+                max_length=128
             )
         
-        all_predictions.append(accelerator.gather_for_metrics(generated_tokens))
-        all_labels.append(accelerator.gather_for_metrics(batch["labels"]))
-    
-    all_predictions = torch.cat(all_predictions)
-    all_labels = torch.cat(all_labels)
+        gathered_tokens = accelerator.gather_for_metrics(generated_tokens)
+        gathered_labels = accelerator.gather_for_metrics(batch["labels"])
 
-    all_labels = torch.where(all_labels != -100, all_labels, tokenizer.pad_token_id)
+        # Decode into strings immediately
+        gathered_labels = torch.where(gathered_labels != -100, gathered_labels, tokenizer.pad_token_id)
 
-    decoded_preds = tokenizer.batch_decode(all_predictions, skip_special_tokens=True)
-    decoded_labels = tokenizer.batch_decode(all_labels, skip_special_tokens=True)
+        decoded_preds = tokenizer.batch_decode(gathered_tokens, skip_special_tokens=True)
+        decoded_labels = tokenizer.batch_decode(gathered_labels, skip_special_tokens=True)
+        
+        all_predictions.extend(decoded_preds)
+        all_labels.extend(decoded_labels)
 
-    result = rouge.compute(predictions=decoded_preds, references=decoded_labels, use_stemmer=True)
+    result = rouge.compute(predictions=all_predictions, references=all_labels, use_stemmer=True)
     result = {key: round(value * 100, 2) for key, value in result.items()}
 
     accelerator.print(f"Epoch {epoch+1} Validation ROUGE: {result}")
@@ -141,20 +142,19 @@ for batch in test_progress_bar:
             max_length=128
         )
     
-    all_test_predictions.append(accelerator.gather_for_metrics(generated_tokens))
-    all_test_labels.append(accelerator.gather_for_metrics(batch["labels"]))
+    gathered_tokens = accelerator.gather_for_metrics(generated_tokens)
+    gathered_labels = accelerator.gather_for_metrics(batch["labels"])
 
-# Concatenate all gathered tensors
-all_test_predictions = torch.cat(all_test_predictions)
-all_test_labels = torch.cat(all_test_labels)
+    gathered_labels = torch.where(gathered_labels != -100, gathered_labels, tokenizer.pad_token_id)
 
-# Decode
-all_test_labels = torch.where(all_test_labels != -100, all_test_labels, tokenizer.pad_token_id)
-decoded_test_preds = tokenizer.batch_decode(all_test_predictions, skip_special_tokens=True)
-decoded_test_labels = tokenizer.batch_decode(all_test_labels, skip_special_tokens=True)
+    decoded_preds = tokenizer.batch_decode(gathered_tokens, skip_special_tokens=True)
+    decoded_labels = tokenizer.batch_decode(gathered_labels, skip_special_tokens = True)
+
+    all_test_predictions.extend(decoded_preds)
+    all_test_labels.extend(decoded_labels)
 
 # Compute final ROUGE scores
-final_result = rouge.compute(predictions=decoded_test_preds, references=decoded_test_labels, use_stemmer=True)
+final_result = rouge.compute(predictions=all_test_predictions, references=all_test_labels, use_stemmer=True)
 final_result = {key: round(value, 4) for key, value in final_result.items()}
 
 accelerator.print("\n--- FINAL TEST SET RESULTS ---")
