@@ -11,6 +11,7 @@ import ast
 
 LOG_FILE_PATH = "./outputs/llm_full_multi_gpu_321123.out"
 OUTPUT_DIR = "./flan-t5-base-biolaysumm-manual-loop"
+HISTORY_FILE = "training_history.json"
 
 def parse_log_to_json(log_path, output_dir, history_file):
     """Parses the SLURM log file and saves metrics to a JSON file."""
