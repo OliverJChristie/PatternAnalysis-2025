@@ -42,3 +42,19 @@ def get_tokenized_datasets(tokenizer, model_checkpoint):
     data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model_checkpoint)
 
     return tokenized_datasets, data_collator
+
+def get_raw_test_examples(num_examples=5, seed=42):
+    """
+    Loads the raw text from the test split for prediction examples.
+    This is a separate function to avoid breaking the training pipeline.
+    """
+    print(f"Loading {num_examples} random raw examples from the test set...")
+
+    test_dataset = load_dataset(
+        "BioLaySumm/BioLaySumm2025-LaymanRRG-opensource-track",
+        split="test"
+    )
+
+    random_samples = test_dataset.shuffle(seed=seed).select(range(num_examples))
+
+    return random_samples['radiology_report']
