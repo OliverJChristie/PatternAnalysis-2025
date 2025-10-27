@@ -5,7 +5,7 @@ from dataset import get_raw_test_examples
 MODEL_DIR = "./flan-t5-base-biolaysumm-manual-loop"
 NUM_EXAMPLES = 5
 
-print(f"Loading fune-tuned model from: {MODEL_DIR}")
+print(f"Loading fine-tuned model from: {MODEL_DIR}")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
 model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_DIR)
 
