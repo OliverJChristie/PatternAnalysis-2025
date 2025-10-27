@@ -189,7 +189,7 @@ if accelerator.is_main_process:
     
     # Save final results to a JSON file
     results_path = os.path.join(OUTPUT_DIR, RESULTS_FILE)
-    final_results_rounded = {key: round(value, 4) for key, value in final_validation_rouge.items()}
+    final_results_rounded = {key: round(value, 4) for key, value in best_validation_results.items()}
     with open(results_path, "w") as f:
         json.dump(best_validation_results, f, indent=2)
     accelerator.print(f"Final results saved to {results_path}")
