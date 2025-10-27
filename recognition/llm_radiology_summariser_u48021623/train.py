@@ -19,6 +19,7 @@ TRAIN_BATCH_SIZE = 8
 EVAL_BATCH_SIZE = 8
 OUTPUT_DIR = "./flan-t5-base-biolaysumm-manual-loop"
 RESULTS_FILE = "final_results_base.json"
+HISTORY_FILE = "training_history.json"
 
 accelerator = Accelerator()
 accelerator.print(f"Using Accelerator state: {accelerator.state}")
@@ -61,6 +62,7 @@ model, optimizer, train_dataloader, eval_dataloader, test_dataloader, lr_schedul
 
 # This will store our best validation score
 best_validation_results = {}
+training_history = {"train_loss": [], "val_rouge_scores": []}
 
 accelerator.print("--- Starting Manual Training Loop ---")
 for epoch in range(NUM_EPOCHS):
@@ -91,6 +93,8 @@ for epoch in range(NUM_EPOCHS):
     
     avg_train_loss = train_loss / len(train_dataloader)
     accelerator.print(f"Epoch {epoch+1} Average Train Loss: {avg_train_loss:.4f}")
+
+    training_history["train_loss"].append(avg_train_loss)
 
     accelerator.print(f"--- Starting Evaluation for Epoch {epoch+1} ---")
     model.eval()
@@ -125,9 +129,13 @@ for epoch in range(NUM_EPOCHS):
         all_labels.extend(decoded_labels)
 
     result = rouge.compute(predictions=all_predictions, references=all_labels, use_stemmer=True)
-    best_validation_results = {key: round(value * 100, 4) for key, value in result.items()}
+    # Convert numpy floats to standard Python floats for JSON serialization
+    result_serializable = {key: float(value) for key, value in result.items()}
 
     accelerator.print(f"Epoch {epoch+1} Validation ROUGE: {best_validation_results}")
+
+    training_history["val_rouge_scores"].append(result_serializable)
+    best_validation_results = result_serializable
 
 accelerator.print("--- Training Complete. Evaluating on (blind) Test Set ---")
 model.eval()
@@ -176,10 +184,14 @@ if accelerator.is_main_process:
     
     # Save final results to a JSON file
     results_path = os.path.join(OUTPUT_DIR, RESULTS_FILE)
+    final_results_rounded = {key: round(value, 4) for key, value in final_validation_rouge.items()}
     with open(results_path, "w") as f:
         json.dump(best_validation_results, f, indent=2)
-    
     accelerator.print(f"Final results saved to {results_path}")
 
+    history_path = os.path.join(OUTPUT_DIR, HISTORY_FILE)
+    with open(history_path, "w") as f:
+        json.dump(training_history, f, indent=2)
+    accelerator.print(f"Training history saved to {history_path}")
 
 accelerator.print("--- Script Finished Successfully ---")
