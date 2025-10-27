@@ -11,6 +11,7 @@ from tqdm.auto import tqdm
 
 from modules import get_model_and_tokenizer
 from dataset import get_tokenized_datasets
+from plot_results import generate_plots
 
 MODEL_CHECKPOINT = "google/flan-t5-base"
 LEARNING_RATE = 2e-5
@@ -20,6 +21,7 @@ EVAL_BATCH_SIZE = 8
 OUTPUT_DIR = "./flan-t5-base-biolaysumm-manual-loop"
 RESULTS_FILE = "final_results_base.json"
 HISTORY_FILE = "training_history.json"
+PLOT_DIR = "./plots"
 
 accelerator = Accelerator()
 accelerator.print(f"Using Accelerator state: {accelerator.state}")
@@ -193,5 +195,12 @@ if accelerator.is_main_process:
     with open(history_path, "w") as f:
         json.dump(training_history, f, indent=2)
     accelerator.print(f"Training history saved to {history_path}")
+
+    accelerator.print(f"Generating plots in {PLOT_DIR}")
+    try:
+        generate_plots(training_history, PLOT_DIR)
+        accelerator.print("Plots generated successfully.")
+    except Exception as e:
+        accelerator.print(f"ERROR: Cound not generate plots: {e}")
 
 accelerator.print("--- Script Finished Successfully ---")

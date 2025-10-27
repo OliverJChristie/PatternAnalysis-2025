@@ -8,3 +8,4 @@ scikit-learn
 rouge_score
 matplotlib
 numpy
+matplotlib
