@@ -1,6 +1,18 @@
 """
-Parses SLURM log files to extract/save metrics to a JSON file.
-Reimplements behaviour from train.py, and not required if train.py is run.
+Utility script to recover training metrics from a SLURM log file.
+
+This script was developed as a one-off utility to parse the output log
+from a completed training run (`.out` file) and reconstruct the
+`training_history.json` file.
+
+The primary motivation was to avoid re-running an ~5-hour training job
+solely to generate the history file after this functionality was added to the
+main training script.
+
+NOTE: This script is now DEPRECATED for the standard workflow.
+The `train.py` script automatically saves the history file upon successful
+completion. This file is retained in the repository as an artifact of the
+development process.
 """
 
 import re
