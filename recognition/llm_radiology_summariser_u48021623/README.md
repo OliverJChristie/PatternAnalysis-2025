@@ -1,7 +1,8 @@
 # Fine-Tuning FLAN-T5 for Radiology Report Summarization
 
 **Author:** Oliver Christie
-**Project:** Task 13, COMP3710 2025
+
+**Project:** Task 13, COMP3710
 
 ## 1. Description of the Algorithm
 
@@ -14,7 +15,7 @@ The algorithm uses a **pretrained encoder-decoder Language Model (LLM)**, specif
 The core of the algorithm is the FLAN-T5 model, which is based on the T5 (Text-to-Text Transfer Transformer) architecture.
 
 1.  **Prefix-based Training:** The model is trained in a "text-to-text" format. A prefix, `"translate Radiology to Layperson: "`, is added to every expert report. The model's task is to generate the corresponding layperson summary as its target text.
-2.  **Fine-Tuning:** We use a **full fine-tuning** strategy, updating all 220 million parameters of the base model.
+2.  **Fine-Tuning:** We use a **full fine-tuning** strategy, updating all ~250 million parameters of the base model.
 3.  **Manual Training Loop:** As required by the course, the training is performed using a manual PyTorch training loop. This loop is managed by the `accelerate` library to handle `bf16` (bfloat16) mixed-precision and device placement, which was necessary to prevent `nan` loss values.
 4.  **Stability:** To ensure stable training with `flan-t5-base` and mixed precision, gradients are clipped to a maximum norm of 1.0 after the backward pass.
 5.  **Evaluation:** The model is evaluated on its ROUGE (Recall-Oriented Understudy for Gisting Evaluation) scores, specifically `rouge1`, `rouge2`, `rougeL`, and `rougeLsum`.
@@ -134,3 +135,10 @@ AP chest X-ray examination. Compared to a previous image from 2016, which was of
 A chest X-ray was taken from the front. Compared to a previous X-ray from 2016, it was not very clear, hard to see, and didn't take a deep breath. There are some cloudy areas seen on both sides, mainly in the lower parts of the lungs, along with some net-like areas that could be signs of an infection, possibly COVID-19. There are no other issues to mention.
 
 ### 5.4. Error Analysis
+
+Overall, the model is highly effective at both simplifying complex medical terminology (e.g. "cardiomediastinal silhouette" becomes "heart and middle chest area") and restructuring sentences for clarity. However, a few minor error patterns can be observed in the generated examples:
+* **Critical Misinterpretation:** In **Example 1**, the model makes a significant error, translating "This location rules out bone pathology" into "This location doesn't rule out bone problems." This complete negation of meaning is a critical failure, likely stemming from the model misinterpreting the phrase "rules out".
+* **Awkward Phrasing and Missing Context** In **Example 3**, the model fails to find a natural sounding layperson term for "cardiac border", resulting in the awkward and unnatural phrase "partially blocking the area where the heart meets the heart". While the model correctly identifies the "denser area" (consolidation), it misses the opportunity to provide crucial clinical context, such as explaining that this combination is a classic sign of pneumonia. 
+* **Repetition:** In **Example 3**, the phrase "which is the muscle that separates the chest from the abdomen" is repeated from the summary in **Example 2**. While helpful, this suggests the model may rely on a few "canned" explanations for common terms rather than generating novel descriptions each time.
+
+Despite these minor issues, the model consistently produces fluent and generally accurate summaries that are far more accessible to a layperson than the original expert reports.
