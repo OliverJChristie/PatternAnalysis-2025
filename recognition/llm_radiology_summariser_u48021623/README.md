@@ -38,15 +38,17 @@ This model was trained on the UQ Rangpur cluster using a single NVIDIA A100 GPU.
 
 ### 4.1. Training
 
-1.  **Environment:** Set up a Conda environment and install the required packages:
+1.  **Setup Environment:** It is recommended to use a virtual environment.:
     ```bash
-    conda create -n comp3710_llm python=3.10
-    conda activate comp3710_llm
+    python -m venv venv
+    source venv/bin/activate
     pip install -r requirements.txt
     ```
-2.  **Run Training:** Submit the `run_full_job_bf16.slurm` script to the SLURM scheduler:
-    `sbatch run_full_job_bf16.slurm`
-3.  **End-User Training:** After a successful run, `train.py` automatically saves the model, final metrics, and the training history (including plots) to the `./flan-t5-base-biolaysumm-manual-loop/` directory.
+2.  **Run Training:** Use `accelerate` to launch the training script. This command uses mixed-precision (`bf16`) and a single GPU, matching the configuration of the final model.
+    ```bash
+    accelerate launch --mixed_precision=bf16 --num_processes=1 train.py
+    ```
+3.  **Outputs:** After training, the script will automaticalyl save the fine-tuned model, tokenizer, final metrics, and training history to the `./flan-t5-base-biolaysumm-manual-loop/` directory. Plots are saved to the `./plots/` directory.
 
 ### 4.2. Example Usage (Prediction)
 
