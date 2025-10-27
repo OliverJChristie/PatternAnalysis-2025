@@ -184,8 +184,8 @@ if accelerator.is_main_process:
     example_path = os.path.join(OUTPUT_DIR, "test_set_predictions_examples.txt")
     with open(example_path, "w") as f:
         f.write("--- Example Test Set Predictions (for workshop submission) ---\n\n")
-        for i in range(min(5, len(all_test_predictions_list))):
-            f.write(f"PREDICTION {i+1}:\n{all_test_predictions_list[i]}\n\n")
+        for i in range(min(5, len(all_test_predictions))):
+            f.write(f"PREDICTION {i+1}:\n{all_test_predictions[i]}\n\n")
             
     accelerator.print(f"Test set prediction examples saved to {example_path}")
 
