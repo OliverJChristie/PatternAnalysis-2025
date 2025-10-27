@@ -140,9 +140,12 @@ for epoch in range(NUM_EPOCHS):
     best_validation_results = result_serializable
 
 accelerator.print("--- Training Complete. Evaluating on (blind) Test Set ---")
+# NOTE: The test set is blind (no labels), so we cannote compute ROUGE scores.
+# This loop's purpose is to generate predictions for the entire test set
+# to ensure the model runs without errors on the final unseen data.
+# For a few visual examples with inputs and outputs, run predict.py.
 model.eval()
 
-# We still run the test set for predictions, even though we can't score them
 all_test_predictions = []
 all_test_labels = []
 
