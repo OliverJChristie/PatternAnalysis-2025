@@ -20,6 +20,8 @@ The core of the algorithm is the FLAN-T5 model, which is based on the T5 (Text-t
 4.  **Stability:** To ensure stable training with `flan-t5-base` and mixed precision, gradients are clipped to a maximum norm of 1.0 after the backward pass.
 5.  **Evaluation:** The model is evaluated on its ROUGE (Recall-Oriented Understudy for Gisting Evaluation) scores, specifically `rouge1`, `rouge2`, `rougeL`, and `rougeLsum`.
 
+This project uses the official, pre-defined dataset splits (train, validation, and test) provided by the BioLaySumm 2025 task authors. Using these standard splits is best practice, as it ensures all results are directly comparable to the official benchmark and other published work.
+
 ## 3. Dependencies
 
 All required Python packages are listed in `requirements.txt`. You can install them with:
