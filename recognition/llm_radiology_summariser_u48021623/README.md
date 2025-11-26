@@ -136,11 +136,20 @@ AP chest X-ray examination. Compared to a previous image from 2016, which was of
 **LAYPERSON SUMMARY:**
 A chest X-ray was taken from the front. Compared to a previous X-ray from 2016, it was not very clear, hard to see, and didn't take a deep breath. There are some cloudy areas seen on both sides, mainly in the lower parts of the lungs, along with some net-like areas that could be signs of an infection, possibly COVID-19. There are no other issues to mention.
 
-### 5.4. Error Analysis
+### 5.4. Analysis and Discussion
 
-Overall, the model is highly effective at both simplifying complex medical terminology (e.g. "cardiomediastinal silhouette" becomes "heart and middle chest area") and restructuring sentences for clarity. However, a few minor error patterns can be observed in the generated examples:
-* **Critical Misinterpretation:** In **Example 1**, the model makes a significant error, translating "This location rules out bone pathology" into "This location doesn't rule out bone problems." This complete negation of meaning is a critical failure, likely stemming from the model misinterpreting the phrase "rules out".
-* **Awkward Phrasing and Missing Context** In **Example 3**, the model fails to find a natural sounding layperson term for "cardiac border", resulting in the awkward and unnatural phrase "partially blocking the area where the heart meets the heart". While the model correctly identifies the "denser area" (consolidation), it misses the opportunity to provide crucial clinical context, such as explaining that this combination is a classic sign of pneumonia. 
-* **Repetition:** In **Example 3**, the phrase "which is the muscle that separates the chest from the abdomen" is repeated from the summary in **Example 2**. While helpful, this suggests the model may rely on a few "canned" explanations for common terms rather than generating novel descriptions each time.
+As observed in the training plots, there is a divergence between the training loss and validation metrics.
+- The *Training Loss* shows a steep and continuous decline (0.89 to 0.65), indicating the model effectively minimised the cross-entropy loss on the training set. However, the *Validation ROUGE* scores show a much flatter trajectory, with only marginal gains between Epoch 1 and Epoch 3 (e.g., ROUGE-1 improved from 73.0 to 74.4).
+- This behaviour suggests rapid convergence. Because we are fine-tuning a pre-trained instruction-tuned model (`flan-t5-base`), the model adapts to the specific domain ("Radiology" -> "Layperson") very quickly, likely within the first epoch. The subsequent drop in training loss without a corresponding proportional jump in ROUGE suggests the model began optimising for the specific phrasing of the training data (memorisation) rather than learning new generalisable patterns.
+- It is also important to note that ROUGE is an n-gram overlap metric. The model may have improved the fluency or confidence of its generations (lowering the loss) in ways that do not strictly result in higher word-overlap with the reference summaries.
 
-Despite these minor issues, the model consistently produces fluent and generally accurate summaries that are far more accessible to a layperson than the original expert reports.
+#### Qualitative Error Analysis
+
+While the quantitative metrics are strong, a manual review of the test outputs reveals spoecific behavioural patterns:
+- The model excels at converting dense medical jargon into accessible language (e.g., "cardiomediastinal silhouette" -> "heart and middle chest area").
+- In Example 1, the model committed a *critical* error by translating "rules out bone pathology" to "doesn't rule out bone problems". This negation flips the clinical meaning entirely and represents a major safety risk in a real-world setting.
+- In Example 3, the model translates "cardiac border" awkwardly as "area where the hear meets the heart". Furthermore, while it correctly identifies the visual finding ("denser area"), it fails to synthesize the clinical implication (pneumonia), which a human expert might infer.
+- The phrase "muscle that separates the chest from the abdomen" appears verbatim across multiple summaries (Examples 2 & 3). This indicates the model has learned specific "glossary definitions" for common anatomical terms and applies them rigidly, rather than generating context-aware descriptions.
+
+#### Conclusion
+The divergence between the falling training loss and the plateauing validation scores suggests that 3 epochs was sufficient (and perhaps slightly more than necessary) for this specific dataset size. Further training would likely result in overfitting. Future work could investigate Early Stopping based on ROUGE-L scores or the implementation of semantic metrics (like BERTScore) to better capture improvements that n-gram overlap misses.
